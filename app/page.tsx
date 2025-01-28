@@ -123,9 +123,15 @@ export default function AICompare() {
             <ThemeToggle />
           </div>
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-3">
           Compare responses from leading AI models side by side. Enter your API keys and a prompt to see how different models handle the same query.
         </p>
+        <div className="bg-muted/50 border rounded-md p-2 text-sm">
+          <p className="flex items-center gap-2">
+            <strong className="font-bold">Note:</strong>
+            API keys are stored in cookies for your convenience. Please ensure you're on a secure device.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
@@ -162,7 +168,7 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap flex-col ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[650px] ${
               results.openai.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
@@ -211,7 +217,7 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap flex-col ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[600px] ${
               results.anthropic.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
@@ -292,9 +298,20 @@ export default function AICompare() {
           {loading ? "Querying AIs..." : "Submit Query"}
         </Button>
       </form>
-      <p className="text-sm text-muted-foreground">
-        Note: API keys are stored in cookies for your convenience. Please ensure you're on a secure device.
-      </p>
+
+      <footer className="text-center text-sm text-muted-foreground space-y-1">
+        <p>Created by Twaites</p>
+        <p>
+          <a 
+            href="https://github.com/Twaites/ai-compare" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-foreground underline underline-offset-4"
+          >
+            View source code on GitHub
+          </a>
+        </p>
+      </footer>
     </main>
   )
 }
