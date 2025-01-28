@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
 import { queryAIs } from "./actions"
 import Cookies from "js-cookie"
 import { Eye, EyeOff } from "lucide-react"
@@ -16,6 +17,8 @@ export default function AICompare() {
     anthropic: "",
     deepseek: "",
   })
+
+  const [showMarkdown, setShowMarkdown] = useState(false)
 
   // Load cookies after component mounts
   useEffect(() => {
@@ -93,7 +96,7 @@ export default function AICompare() {
 
   function LoadingResponse() {
     return (
-      <div className="h-full rounded-sm p-4 overflow-y-auto bg-muted animate-pulse">
+      <div className="h-full rounded-sm p-4 bg-muted animate-pulse">
         <div className="h-4 bg-muted-foreground/20 rounded w-3/4 mb-2"></div>
         <div className="h-4 bg-muted-foreground/20 rounded w-1/2"></div>
       </div>
@@ -107,6 +110,15 @@ export default function AICompare() {
         <p className="text-muted-foreground">
           Compare responses from leading AI models side by side. Enter your API keys and a prompt to see how different models handle the same query.
         </p>
+        <div className="flex items-center space-x-2 mt-2">
+          <Switch
+            checked={!showMarkdown}
+            onCheckedChange={(checked) => setShowMarkdown(!checked)}
+          />
+          <label className="text-sm text-muted-foreground">
+            Markdown Format
+          </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
@@ -143,13 +155,17 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 h-[400px] rounded-sm p-4 overflow-y-auto whitespace-pre-wrap ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[600px] ${
               results.openai.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
-                <ReactMarkdown>
-                  {results.openai || "ChatGPT results will appear here..."}
-                </ReactMarkdown>
+                showMarkdown ? (
+                  results.openai || "ChatGPT results will appear here..."
+                ) : (
+                  <ReactMarkdown>
+                    {results.openai || "ChatGPT results will appear here..."}
+                  </ReactMarkdown>
+                )
               )}
             </div>
           </CardContent>
@@ -188,10 +204,18 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 h-[400px] rounded-sm p-4 overflow-y-auto whitespace-pre-wrap ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[600px] ${
               results.anthropic.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {loading ? <LoadingResponse /> : (results.anthropic || "Claude results will appear here...")}
+              {loading ? <LoadingResponse /> : (
+                showMarkdown ? (
+                  results.anthropic || "Claude results will appear here..."
+                ) : (
+                  <ReactMarkdown>
+                    {results.anthropic || "Claude results will appear here..."}
+                  </ReactMarkdown>
+                )
+              )}
             </div>
           </CardContent>
         </Card>
@@ -229,10 +253,18 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 h-[400px] rounded-sm p-4 overflow-y-auto whitespace-pre-wrap ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[600px] ${
               results.deepseek.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {loading ? <LoadingResponse /> : (results.deepseek || "DeepSeek results will appear here...")}
+              {loading ? <LoadingResponse /> : (
+                showMarkdown ? (
+                  results.deepseek || "DeepSeek results will appear here..."
+                ) : (
+                  <ReactMarkdown>
+                    {results.deepseek || "DeepSeek results will appear here..."}
+                  </ReactMarkdown>
+                )
+              )}
             </div>
           </CardContent>
         </Card>
