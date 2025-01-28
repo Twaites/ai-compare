@@ -168,7 +168,7 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[650px] ${
+            <div className={`flex-1 rounded-sm p-4 whitespace-pre-wrap overflow-y-auto max-h-[650px] ${
               results.openai.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
@@ -217,7 +217,7 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[600px] ${
+            <div className={`flex-1 rounded-sm p-4 whitespace-pre-wrap overflow-y-auto max-h-[650px]  ${
               results.anthropic.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
@@ -266,7 +266,7 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap flex-col ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[650px] ${
               results.deepseek.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
