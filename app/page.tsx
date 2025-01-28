@@ -74,7 +74,7 @@ export default function AICompare() {
 
     try {
       const response = await queryAIs(prompt, activeKeys)
-      if (response.success) {
+      if (response.success && response.results) {
         setResults(response.results)
       } else {
         // Handle error case
@@ -97,16 +97,20 @@ export default function AICompare() {
   }
 
   return (
-    <main className="container mx-auto p-4 space-y-8">
-      <h1 className="text-2xl font-bold">AI Compare</h1>
+    <main className="container max-w-[1600px] mx-auto p-4 min-h-screen flex flex-col gap-8">
+      <div>
+        <h1 className="text-2xl font-bold">AI Compare</h1>
+        <p className="text-muted-foreground">
+          Compare responses from leading AI models side by side. Enter your API keys and a prompt to see how different models handle the same query.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* ChatGPT Card */}
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>ChatGPT</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 flex flex-col">
             <div className="relative flex gap-2">
               <div className="relative flex-1">
                 <Input
@@ -135,10 +139,10 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`h-[400px] rounded-lg p-4 overflow-auto ${
+            <div className={`flex-1 rounded-sm p-4 overflow-auto ${
               results.openai.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {results.openai || "Response will appear here..."}
+              {results.openai || "ChatGPT results will appear here..."}
             </div>
             {timings.openai > 0 && (
               <p className="text-sm text-muted-foreground mt-2">
@@ -148,12 +152,11 @@ export default function AICompare() {
           </CardContent>
         </Card>
 
-        {/* Claude Card */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Claude</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 flex flex-col">
             <div className="relative flex gap-2">
               <div className="relative flex-1">
                 <Input
@@ -182,10 +185,10 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`h-[400px] rounded-lg p-4 overflow-auto ${
+            <div className={`flex-1 rounded-sm p-4 overflow-auto ${
               results.anthropic.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {results.anthropic || "Response will appear here..."}
+              {results.anthropic || "Claude results will appear here..."}
             </div>
             {timings.anthropic > 0 && (
               <p className="text-sm text-muted-foreground mt-2">
@@ -195,12 +198,11 @@ export default function AICompare() {
           </CardContent>
         </Card>
 
-        {/* DeepSeek Card */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>DeepSeek</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 flex flex-col">
             <div className="relative flex gap-2">
               <div className="relative flex-1">
                 <Input
@@ -229,10 +231,10 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`h-[400px] rounded-lg p-4 overflow-auto ${
+            <div className={`flex-1 rounded-sm p-4 overflow-auto ${
               results.deepseek.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {results.deepseek || "Response will appear here..."}
+              {results.deepseek || "DeepSeek results will appear here..."}
             </div>
             {timings.deepseek > 0 && (
               <p className="text-sm text-muted-foreground mt-2">
@@ -248,7 +250,7 @@ export default function AICompare() {
           placeholder="Enter your query here..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          className="min-h-[100px]"
+          className="min-h-[150px]"
         />
         <Button
           type="submit"
