@@ -29,68 +29,51 @@ export async function queryAIs(
     ])
   }
 
-  // Pre-initialize API clients outside the promise to avoid connection overhead
-  const openaiClient = keys.openai ? new OpenAI({ apiKey: keys.openai }) : null
-  const anthropicClient = keys.anthropic ? new Anthropic({ apiKey: keys.anthropic }) : null
-  const deepseekClient = keys.deepseek ? 
-    new OpenAI({ baseURL: 'https://api.deepseek.com/v1', apiKey: keys.deepseek }) : null
-
-  // Optimize API parameters for faster responses
-  const openaiParams = {
-    model: "gpt-4-turbo-preview",
-    messages: [{ role: "user", content: prompt }],
-    max_tokens: 1024, // Limit response length
-    temperature: 0.7, // Lower temperature for faster responses
-    presence_penalty: 0,
-    frequency_penalty: 0,
-  }
-
-  const anthropicParams = {
-    model: "claude-3-5-sonnet-20240620",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.7,
-  }
-
-  const deepseekParams = {
-    model: "deepseek-chat",
-    messages: [{ role: "user", content: prompt }],
-    max_tokens: 1024,
-    temperature: 0.7,
-  }
-
   try {
+    // Parallel API calls for better performance
     const responses = await Promise.allSettled([
       // OpenAI call
-      openaiClient
+      keys.openai
         ? withTimeout((async () => {
-            const completion = await openaiClient.chat.completions.create({
-              ...openaiParams,
-              messages: [{ role: "user" as const, content: prompt }]
-            })
-            return { text: completion.choices[0].message.content || "" }
+            const openai = new OpenAI({ apiKey: keys.openai });
+            const completion = await openai.chat.completions.create({
+              model: "gpt-4-turbo-preview",
+              messages: [{ role: "user", content: prompt }],
+              stream: true
+            });
+            let content = ''
+            for await (const chunk of completion) {
+              content += chunk.choices[0]?.delta?.content || ''
+            }
+            return { text: content }
           })())
         : Promise.reject("No API key provided"),
 
       // Anthropic call
-      anthropicClient
+      keys.anthropic
         ? withTimeout((async () => {
-            const message = await anthropicClient.messages.create({
-              ...anthropicParams,
-              messages: [{ role: "user" as const, content: prompt }]
-            })
-            return { text: message.content[0].type === 'text' ? message.content[0].text : 'Error: No text content' }
+            const anthropic = new Anthropic({ apiKey: keys.anthropic });
+            const message = await anthropic.messages.create({
+              model: "claude-3-5-sonnet-20240620",
+              max_tokens: 1024,
+              messages: [{ role: "user", content: prompt }],
+            });
+            return { text: message.content[0].type === 'text' ? message.content[0].text : 'Error: No text content' };
           })())
         : Promise.reject("No API key provided"),
 
       // DeepSeek call
-      deepseekClient
+      keys.deepseek
         ? withTimeout((async () => {
-            const completion = await deepseekClient.chat.completions.create({
-              ...deepseekParams,
-              messages: [{ role: "user" as const, content: prompt }]
-            })
-            return { text: completion.choices[0].message.content || "" }
+            const deepseek = new OpenAI({
+              baseURL: 'https://api.deepseek.com/v1',
+              apiKey: keys.deepseek,
+            });
+            const completion = await deepseek.chat.completions.create({
+              model: "deepseek-chat",
+              messages: [{ role: "user", content: prompt }],
+            });
+            return { text: completion.choices[0].message.content || "" };
           })())
         : Promise.reject("No API key provided"),
     ])
