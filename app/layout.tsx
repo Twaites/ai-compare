@@ -14,9 +14,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script defer data-domain="ai-compare.twaites.com" src="https://analytics.twaites.com/js/script.js"></script>
-      </head>
       <body>
         <ThemeProvider
           attribute="class"

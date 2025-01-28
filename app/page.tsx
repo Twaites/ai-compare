@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { queryAIs } from "./actions"
 import Cookies from "js-cookie"
 import { Eye, EyeOff } from "lucide-react"
 import ReactMarkdown from 'react-markdown'
@@ -36,8 +35,13 @@ export default function AICompare() {
     deepseek: "",
   })
 
+  const [loading, setLoading] = useState({
+    openai: false,
+    anthropic: false,
+    deepseek: false,
+  })
+
   const [prompt, setPrompt] = useState("")
-  const [loading, setLoading] = useState(false)
 
   const [showKeys, setShowKeys] = useState({
     openai: false,
@@ -59,40 +63,67 @@ export default function AICompare() {
     Cookies.remove(`${provider}_api_key`)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setResults({
       openai: "",
       anthropic: "",
       deepseek: "",
     })
+    setLoading({
+      openai: true,
+      anthropic: true,
+      deepseek: true,
+    })
 
-    // Only include API keys that have been entered
-    const activeKeys = Object.fromEntries(Object.entries(apiKeys).filter(([_, value]) => value.length > 0))
+    const activeKeys = { ...apiKeys }
 
-    try {
-      const response = await queryAIs(prompt, activeKeys)
-      if (response.success && response.results) {
-        setResults(response.results)
-      } else {
-        // Handle error case
-        setResults({
-          openai: "Error: Failed to query AIs",
-          anthropic: "Error: Failed to query AIs",
-          deepseek: "Error: Failed to query AIs",
-        })
+    // Function to fetch data for a specific provider
+    const fetchData = async (provider: "openai" | "anthropic" | "deepseek") => {
+      if (!activeKeys[provider]) {
+        setResults((prev) => ({ ...prev, [provider]: "Error: No API key provided" }))
+        setLoading((prev) => ({ ...prev, [provider]: false }))
+        return
       }
-    } catch (error) {
-      console.error('Error querying AIs:', error)
-      setResults({
-        openai: "Error: Failed to query AIs",
-        anthropic: "Error: Failed to query AIs",
-        deepseek: "Error: Failed to query AIs",
-      })
+
+      let endpoint = ""
+      switch (provider) {
+        case "openai":
+          endpoint = "/api/query/openai"
+          break
+        case "anthropic":
+          endpoint = "/api/query/anthropic"
+          break
+        case "deepseek":
+          endpoint = "/api/query/deepseek"
+          break
+      }
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt, apiKey: activeKeys[provider] }),
+        })
+        const data = await response.json()
+        if (data.success) {
+          setResults((prev) => ({ ...prev, [provider]: data.text }))
+        } else {
+          setResults((prev) => ({ ...prev, [provider]: `Error: ${data.error}` }))
+        }
+      } catch (error: any) {
+        setResults((prev) => ({ ...prev, [provider]: `Error: ${error.message}` }))
+      } finally {
+        setLoading((prev) => ({ ...prev, [provider]: false }))
+      }
     }
 
-    setLoading(false)
+    // Initiate all fetches concurrently
+    fetchData("openai")
+    fetchData("anthropic")
+    fetchData("deepseek")
   }
 
   function LoadingResponse() {
@@ -171,7 +202,7 @@ export default function AICompare() {
             <div className={`flex-1 rounded-sm p-4 whitespace-pre-wrap overflow-y-auto max-h-[650px] ${
               results.openai.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {loading ? <LoadingResponse /> : (
+              {loading.openai ? <LoadingResponse /> : (
                 showMarkdown ? (
                   results.openai || "ChatGPT results will appear here..."
                 ) : (
@@ -217,10 +248,10 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 whitespace-pre-wrap overflow-y-auto max-h-[650px]  ${
+            <div className={`flex-1 rounded-sm p-4 whitespace-pre-wrap overflow-y-auto max-h-[650px] ${
               results.anthropic.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {loading ? <LoadingResponse /> : (
+              {loading.anthropic ? <LoadingResponse /> : (
                 showMarkdown ? (
                   results.anthropic || "Claude results will appear here..."
                 ) : (
@@ -266,10 +297,10 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[650px] ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap max-h-[650px] ${
               results.deepseek.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {loading ? <LoadingResponse /> : (
+              {loading.deepseek ? <LoadingResponse /> : (
                 showMarkdown ? (
                   results.deepseek || "DeepSeek results will appear here..."
                 ) : (
@@ -293,9 +324,13 @@ export default function AICompare() {
         <Button
           type="submit"
           className="w-full"
-          disabled={loading || !prompt || Object.values(apiKeys).every((key) => !key)}
+          disabled={
+            loading.openai || loading.anthropic || loading.deepseek ||
+            !prompt ||
+            Object.values(apiKeys).every((key) => !key)
+          }
         >
-          {loading ? "Querying AIs..." : "Submit Query"}
+          {loading.openai || loading.anthropic || loading.deepseek ? "Querying AIs..." : "Submit Query"}
         </Button>
       </form>
 
