@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { queryAIs } from "./actions"
 import Cookies from "js-cookie"
 import { Eye, EyeOff } from "lucide-react"
+import ReactMarkdown from 'react-markdown'
 
 export default function AICompare() {
   const [apiKeys, setApiKeys] = useState({
@@ -38,12 +39,6 @@ export default function AICompare() {
     openai: false,
     anthropic: false,
     deepseek: false,
-  })
-
-  const [timings, setTimings] = useState({
-    openai: 0,
-    anthropic: 0,
-    deepseek: 0,
   })
 
   const handleApiKeyChange = (provider: "openai" | "anthropic" | "deepseek", value: string) => {
@@ -96,6 +91,15 @@ export default function AICompare() {
     setLoading(false)
   }
 
+  function LoadingResponse() {
+    return (
+      <div className="h-full rounded-sm p-4 overflow-y-auto bg-muted animate-pulse">
+        <div className="h-4 bg-muted-foreground/20 rounded w-3/4 mb-2"></div>
+        <div className="h-4 bg-muted-foreground/20 rounded w-1/2"></div>
+      </div>
+    )
+  }
+
   return (
     <main className="container max-w-[1600px] mx-auto p-4 min-h-screen flex flex-col gap-8">
       <div>
@@ -139,16 +143,15 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-auto ${
+            <div className={`flex-1 h-[400px] rounded-sm p-4 overflow-y-auto whitespace-pre-wrap ${
               results.openai.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {results.openai || "ChatGPT results will appear here..."}
+              {loading ? <LoadingResponse /> : (
+                <ReactMarkdown>
+                  {results.openai || "ChatGPT results will appear here..."}
+                </ReactMarkdown>
+              )}
             </div>
-            {timings.openai > 0 && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Response time: {(timings.openai / 1000).toFixed(2)}s
-              </p>
-            )}
           </CardContent>
         </Card>
 
@@ -185,16 +188,11 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-auto ${
+            <div className={`flex-1 h-[400px] rounded-sm p-4 overflow-y-auto whitespace-pre-wrap ${
               results.anthropic.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {results.anthropic || "Claude results will appear here..."}
+              {loading ? <LoadingResponse /> : (results.anthropic || "Claude results will appear here...")}
             </div>
-            {timings.anthropic > 0 && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Response time: {(timings.anthropic / 1000).toFixed(2)}s
-              </p>
-            )}
           </CardContent>
         </Card>
 
@@ -231,16 +229,11 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-auto ${
+            <div className={`flex-1 h-[400px] rounded-sm p-4 overflow-y-auto whitespace-pre-wrap ${
               results.deepseek.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
-              {results.deepseek || "DeepSeek results will appear here..."}
+              {loading ? <LoadingResponse /> : (results.deepseek || "DeepSeek results will appear here...")}
             </div>
-            {timings.deepseek > 0 && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Response time: {(timings.deepseek / 1000).toFixed(2)}s
-              </p>
-            )}
           </CardContent>
         </Card>
       </div>

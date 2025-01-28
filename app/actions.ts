@@ -17,24 +17,36 @@ export async function queryAIs(
     deepseek: "",
   }
 
+  const TIMEOUT_MS = 30000 // 30 seconds
+
+  // Helper function to timeout a promise
+  const withTimeout = (promise: Promise<any>) => {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Request timed out after 30 seconds")), TIMEOUT_MS)
+      )
+    ])
+  }
+
   try {
     // Parallel API calls for better performance
     const responses = await Promise.allSettled([
       // OpenAI call
       keys.openai
-        ? (async () => {
+        ? withTimeout((async () => {
             const openai = new OpenAI({ apiKey: keys.openai });
             const completion = await openai.chat.completions.create({
               model: "gpt-4-turbo-preview",
               messages: [{ role: "user", content: prompt }],
             });
             return { text: completion.choices[0].message.content || "" };
-          })()
+          })())
         : Promise.reject("No API key provided"),
 
       // Anthropic call
       keys.anthropic
-        ? (async () => {
+        ? withTimeout((async () => {
             const anthropic = new Anthropic({ apiKey: keys.anthropic });
             const message = await anthropic.messages.create({
               model: "claude-3-5-sonnet-20240620",
@@ -42,12 +54,12 @@ export async function queryAIs(
               messages: [{ role: "user", content: prompt }],
             });
             return { text: message.content[0].type === 'text' ? message.content[0].text : 'Error: No text content' };
-          })()
+          })())
         : Promise.reject("No API key provided"),
 
       // DeepSeek call
       keys.deepseek
-        ? (async () => {
+        ? withTimeout((async () => {
             const deepseek = new OpenAI({
               baseURL: 'https://api.deepseek.com/v1',
               apiKey: keys.deepseek,
@@ -57,7 +69,7 @@ export async function queryAIs(
               messages: [{ role: "user", content: prompt }],
             });
             return { text: completion.choices[0].message.content || "" };
-          })()
+          })())
         : Promise.reject("No API key provided"),
     ])
 
