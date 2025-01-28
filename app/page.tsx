@@ -1,19 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { queryAIs } from "./actions"
 import Cookies from "js-cookie"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function AICompare() {
-  const [apiKeys, setApiKeys] = useState(() => ({
-    openai: Cookies.get("openai_api_key") || "",
-    anthropic: Cookies.get("anthropic_api_key") || "",
-    deepseek: Cookies.get("deepseek_api_key") || "",
-  }))
+  const [apiKeys, setApiKeys] = useState({
+    openai: "",
+    anthropic: "",
+    deepseek: "",
+  })
+
+  // Load cookies after component mounts
+  useEffect(() => {
+    setApiKeys({
+      openai: Cookies.get("openai_api_key") || "",
+      anthropic: Cookies.get("anthropic_api_key") || "",
+      deepseek: Cookies.get("deepseek_api_key") || "",
+    })
+  }, [])
 
   const [results, setResults] = useState({
     openai: "",
@@ -24,6 +34,18 @@ export default function AICompare() {
   const [prompt, setPrompt] = useState("")
   const [loading, setLoading] = useState(false)
 
+  const [showKeys, setShowKeys] = useState({
+    openai: false,
+    anthropic: false,
+    deepseek: false,
+  })
+
+  const [timings, setTimings] = useState({
+    openai: 0,
+    anthropic: 0,
+    deepseek: 0,
+  })
+
   const handleApiKeyChange = (provider: "openai" | "anthropic" | "deepseek", value: string) => {
     setApiKeys((prev) => ({ ...prev, [provider]: value }))
     if (value) {
@@ -33,16 +55,42 @@ export default function AICompare() {
     }
   }
 
+  const handleDeleteKey = (provider: "openai" | "anthropic" | "deepseek") => {
+    setApiKeys((prev) => ({ ...prev, [provider]: "" }))
+    Cookies.remove(`${provider}_api_key`)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setResults({
+      openai: "",
+      anthropic: "",
+      deepseek: "",
+    })
 
     // Only include API keys that have been entered
     const activeKeys = Object.fromEntries(Object.entries(apiKeys).filter(([_, value]) => value.length > 0))
 
-    const response = await queryAIs(prompt, activeKeys)
-    if (response.success) {
-      setResults(response.results)
+    try {
+      const response = await queryAIs(prompt, activeKeys)
+      if (response.success) {
+        setResults(response.results)
+      } else {
+        // Handle error case
+        setResults({
+          openai: "Error: Failed to query AIs",
+          anthropic: "Error: Failed to query AIs",
+          deepseek: "Error: Failed to query AIs",
+        })
+      }
+    } catch (error) {
+      console.error('Error querying AIs:', error)
+      setResults({
+        openai: "Error: Failed to query AIs",
+        anthropic: "Error: Failed to query AIs",
+        deepseek: "Error: Failed to query AIs",
+      })
     }
 
     setLoading(false)
@@ -59,15 +107,44 @@ export default function AICompare() {
             <CardTitle>ChatGPT</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Input
-              placeholder="API Key"
-              type="password"
-              value={apiKeys.openai}
-              onChange={(e) => handleApiKeyChange("openai", e.target.value)}
-            />
-            <div className="h-[400px] bg-muted rounded-lg p-4 overflow-auto">
+            <div className="relative flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  placeholder="API Key"
+                  type={showKeys.openai ? "text" : "password"}
+                  value={apiKeys.openai}
+                  onChange={(e) => handleApiKeyChange("openai", e.target.value)}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                  onClick={() => setShowKeys(prev => ({ ...prev, openai: !prev.openai }))}
+                >
+                  {showKeys.openai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              {apiKeys.openai && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => handleDeleteKey("openai")}
+                >
+                  Delete
+                </Button>
+              )}
+            </div>
+            <div className={`h-[400px] rounded-lg p-4 overflow-auto ${
+              results.openai.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
+            }`}>
               {results.openai || "Response will appear here..."}
             </div>
+            {timings.openai > 0 && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Response time: {(timings.openai / 1000).toFixed(2)}s
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -77,15 +154,44 @@ export default function AICompare() {
             <CardTitle>Claude</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Input
-              placeholder="API Key"
-              type="password"
-              value={apiKeys.anthropic}
-              onChange={(e) => handleApiKeyChange("anthropic", e.target.value)}
-            />
-            <div className="h-[400px] bg-muted rounded-lg p-4 overflow-auto">
+            <div className="relative flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  placeholder="API Key"
+                  type={showKeys.anthropic ? "text" : "password"}
+                  value={apiKeys.anthropic}
+                  onChange={(e) => handleApiKeyChange("anthropic", e.target.value)}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                  onClick={() => setShowKeys(prev => ({ ...prev, anthropic: !prev.anthropic }))}
+                >
+                  {showKeys.anthropic ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              {apiKeys.anthropic && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => handleDeleteKey("anthropic")}
+                >
+                  Delete
+                </Button>
+              )}
+            </div>
+            <div className={`h-[400px] rounded-lg p-4 overflow-auto ${
+              results.anthropic.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
+            }`}>
               {results.anthropic || "Response will appear here..."}
             </div>
+            {timings.anthropic > 0 && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Response time: {(timings.anthropic / 1000).toFixed(2)}s
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -95,15 +201,44 @@ export default function AICompare() {
             <CardTitle>DeepSeek</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Input
-              placeholder="API Key"
-              type="password"
-              value={apiKeys.deepseek}
-              onChange={(e) => handleApiKeyChange("deepseek", e.target.value)}
-            />
-            <div className="h-[400px] bg-muted rounded-lg p-4 overflow-auto">
+            <div className="relative flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  placeholder="API Key"
+                  type={showKeys.deepseek ? "text" : "password"}
+                  value={apiKeys.deepseek}
+                  onChange={(e) => handleApiKeyChange("deepseek", e.target.value)}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                  onClick={() => setShowKeys(prev => ({ ...prev, deepseek: !prev.deepseek }))}
+                >
+                  {showKeys.deepseek ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              {apiKeys.deepseek && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => handleDeleteKey("deepseek")}
+                >
+                  Delete
+                </Button>
+              )}
+            </div>
+            <div className={`h-[400px] rounded-lg p-4 overflow-auto ${
+              results.deepseek.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
+            }`}>
               {results.deepseek || "Response will appear here..."}
             </div>
+            {timings.deepseek > 0 && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Response time: {(timings.deepseek / 1000).toFixed(2)}s
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
