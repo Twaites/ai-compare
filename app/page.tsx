@@ -10,6 +10,7 @@ import { queryAIs } from "./actions"
 import Cookies from "js-cookie"
 import { Eye, EyeOff } from "lucide-react"
 import ReactMarkdown from 'react-markdown'
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function AICompare() {
   const [apiKeys, setApiKeys] = useState({
@@ -106,19 +107,25 @@ export default function AICompare() {
   return (
     <main className="container max-w-[1600px] mx-auto p-4 min-h-screen flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-bold">AI Compare</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">AI Compare</h1>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-markdown"
+                checked={!showMarkdown}
+                onCheckedChange={(checked) => setShowMarkdown(!checked)}
+              />
+              <label htmlFor="show-markdown" className="text-sm text-muted-foreground">
+                Format Markdown
+              </label>
+            </div>
+            <ThemeToggle />
+          </div>
+        </div>
         <p className="text-muted-foreground">
           Compare responses from leading AI models side by side. Enter your API keys and a prompt to see how different models handle the same query.
         </p>
-        <div className="flex items-center space-x-2 mt-2">
-          <Switch
-            checked={!showMarkdown}
-            onCheckedChange={(checked) => setShowMarkdown(!checked)}
-          />
-          <label className="text-sm text-muted-foreground">
-            Markdown Format
-          </label>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
@@ -155,7 +162,7 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[600px] ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap flex-col ${
               results.openai.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
@@ -204,7 +211,7 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[600px] ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap flex-col ${
               results.anthropic.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
@@ -253,7 +260,7 @@ export default function AICompare() {
                 </Button>
               )}
             </div>
-            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap overflow-y-auto max-h-[600px] ${
+            <div className={`flex-1 rounded-sm p-4 overflow-y-auto whitespace-pre-wrap flex-col ${
               results.deepseek.startsWith('Error:') ? 'bg-red-100' : 'bg-muted'
             }`}>
               {loading ? <LoadingResponse /> : (
@@ -275,7 +282,7 @@ export default function AICompare() {
           placeholder="Enter your query here..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          className="min-h-[150px]"
+          className="min-h-[50px]"
         />
         <Button
           type="submit"
@@ -285,7 +292,7 @@ export default function AICompare() {
           {loading ? "Querying AIs..." : "Submit Query"}
         </Button>
       </form>
-      <p className="text-sm text-muted-foreground mt-4">
+      <p className="text-sm text-muted-foreground">
         Note: API keys are stored in cookies for your convenience. Please ensure you're on a secure device.
       </p>
     </main>
