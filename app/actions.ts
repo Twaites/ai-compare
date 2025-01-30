@@ -6,7 +6,7 @@ import axios from 'axios'
 
 export async function queryOpenAI(prompt: string, apiKey: string) {
   try {
-    const openai = new OpenAI({ apiKey })
+    const openai = new OpenAI({ apiKey, timeout: 45000 })
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [{ role: "user", content: prompt }],
@@ -22,7 +22,11 @@ export async function queryOpenAI(prompt: string, apiKey: string) {
 
 export async function queryAnthropic(prompt: string, apiKey: string) {
   try {
-    const anthropic = new Anthropic({ apiKey })
+    const anthropic = new Anthropic({ 
+      apiKey,
+      maxRetries: 0,
+      timeout: 45000 // 45 second timeout
+    })
     const message = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 1024,
@@ -73,6 +77,7 @@ export async function queryDeepSeek(prompt: string, apiKey: string) {
           'Accept': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
+        timeout: 45000, // 45 second timeout
         maxBodyLength: Infinity
       }
     )
