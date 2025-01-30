@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,8 +10,13 @@ import Cookies from "js-cookie"
 import { Eye, EyeOff } from "lucide-react"
 import ReactMarkdown from 'react-markdown'
 import { ThemeToggle } from "@/components/theme-toggle"
+import toast from 'react-hot-toast'
 
 export default function AICompare() {
+  const timeoutRef = useRef<NodeJS.Timeout>()
+  const slowResponseRef = useRef<NodeJS.Timeout>()
+  const toastIdRef = useRef<string>()
+
   const [apiKeys, setApiKeys] = useState({
     openai: "",
     anthropic: "",
@@ -65,6 +70,12 @@ export default function AICompare() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Clear any existing timeouts and toasts
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    if (slowResponseRef.current) clearTimeout(slowResponseRef.current)
+    if (toastIdRef.current) toast.dismiss(toastIdRef.current)
+
     setResults({
       openai: "",
       anthropic: "",
@@ -77,6 +88,13 @@ export default function AICompare() {
     })
 
     const activeKeys = { ...apiKeys }
+
+    // Set slow response notification
+    slowResponseRef.current = setTimeout(() => {
+      toastIdRef.current = toast('Taking longer than expected...\nThis might take a few more seconds.', {
+        duration: 20000,
+      })
+    }, 10000)
 
     // Function to fetch data for a specific provider
     const fetchData = async (provider: "openai" | "anthropic" | "deepseek") => {
@@ -100,12 +118,16 @@ export default function AICompare() {
       }
 
       try {
+        const controller = new AbortController()
+        timeoutRef.current = setTimeout(() => controller.abort(), 40000)
+
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ prompt, apiKey: activeKeys[provider] }),
+          signal: controller.signal,
         })
         const data = await response.json()
         if (data.success) {
@@ -114,8 +136,14 @@ export default function AICompare() {
           setResults((prev) => ({ ...prev, [provider]: `Error: ${data.error}` }))
         }
       } catch (error: any) {
-        setResults((prev) => ({ ...prev, [provider]: `Error: ${error.message}` }))
+        const errorMessage = error.name === 'AbortError' 
+          ? 'Error: Request timed out after 40 seconds' 
+          : `Error: ${error.message}`
+        setResults((prev) => ({ ...prev, [provider]: errorMessage }))
       } finally {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        if (slowResponseRef.current) clearTimeout(slowResponseRef.current)
+        if (toastIdRef.current) toast.dismiss(toastIdRef.current)
         setLoading((prev) => ({ ...prev, [provider]: false }))
       }
     }
@@ -125,6 +153,14 @@ export default function AICompare() {
     fetchData("anthropic")
     fetchData("deepseek")
   }
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (slowResponseRef.current) clearTimeout(slowResponseRef.current)
+    }
+  }, [])
 
   function LoadingResponse() {
     return (
