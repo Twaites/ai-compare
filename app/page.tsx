@@ -92,7 +92,7 @@ export default function AICompare() {
     // Set slow response notification
     slowResponseRef.current = setTimeout(() => {
       toastIdRef.current = toast('Taking longer than expected...\nThis might take a few more seconds.', {
-        duration: 20000,
+        duration: 35000,
       })
     }, 10000)
 
